@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="grad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#67e8f9;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#06b6d4;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0e7490;stop-opacity:1" />
+    </radialGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="4" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="120" fill="url(#grad)" />
+  
+  <!-- Highlight -->
+  <ellipse cx="150" cy="120" rx="100" ry="60" fill="white" fill-opacity="0.3" transform="rotate(-20 150 120)" />
+
+  <!-- Eyes -->
+  <g transform="translate(0, 20)">
+    <circle cx="170" cy="220" r="55" fill="white" filter="url(#shadow)"/>
+    <circle cx="170" cy="220" r="25" fill="#0f172a" transform="translate(15, 0)"/>
+    <circle cx="175" cy="210" r="8" fill="white" opacity="0.9"/>
+    
+    <circle cx="342" cy="220" r="55" fill="white" filter="url(#shadow)"/>
+    <circle cx="342" cy="220" r="25" fill="#0f172a" transform="translate(15, 0)"/>
+    <circle cx="347" cy="210" r="8" fill="white" opacity="0.9"/>
+  </g>
+
+  <!-- Mouth -->
+  <path d="M210 340 Q256 390 302 340" stroke="#0f172a" stroke-width="24" fill="none" stroke-linecap="round" />
+  
+  <!-- Cheeks -->
+  <circle cx="130" cy="300" r="20" fill="#f472b6" opacity="0.6" />
+  <circle cx="382" cy="300" r="20" fill="#f472b6" opacity="0.6" />
+</svg>
