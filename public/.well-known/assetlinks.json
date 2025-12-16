@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.infectionsy.app",
+      "sha256_cert_fingerprints": [
+        "8C:41:AF:BA:A8:70:26:24:60:D0:A9:5C:7A:10:08:C0:54:26:EC:72:20:2A:E4:14:CA:51:02:B3:C9:BA:B0:AB"
+      ]
+    }
+  }
+]
