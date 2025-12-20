@@ -505,70 +505,8 @@ const App: React.FC = () => {
                 }}
               />
               
-              {/* Confetti effect */}
-              {gameState.winner !== 'draw' && (
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  {[...Array(20)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className={`absolute w-2 h-2 rounded-full ${
-                        gameState.winner === 1 ? 'bg-cyan-400' : 'bg-rose-400'
-                      }`}
-                      initial={{
-                        x: '50%',
-                        y: '50%',
-                        opacity: 1,
-                        scale: 1
-                      }}
-                      animate={{
-                        x: `${Math.random() * 100}%`,
-                        y: `${Math.random() * 100 + 50}%`,
-                        opacity: 0,
-                        scale: 0
-                      }}
-                      transition={{
-                        duration: 2,
-                        delay: Math.random() * 0.5,
-                        ease: "easeOut"
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
 
               <div className="relative z-10">
-                {/* Winner Character with animation */}
-                <motion.div 
-                  className="mb-6 flex justify-center"
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
-                >
-                  {gameState.winner === 'draw' ? (
-                    <motion.div 
-                      className="w-32 h-32 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center shadow-lg"
-                      animate={{ rotate: [0, 10, -10, 0] }}
-                      transition={{ repeat: Infinity, duration: 3 }}
-                    >
-                      <Users className="w-16 h-16 text-slate-500" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      animate={{ 
-                        scale: [1, 1.2, 1],
-                        rotate: [0, 5, -5, 0]
-                      }}
-                      transition={{ 
-                        scale: { repeat: Infinity, duration: 2 },
-                        rotate: { repeat: Infinity, duration: 3 }
-                      }}
-                      className="scale-150"
-                    >
-                      <Character player={gameState.winner as Player} />
-                    </motion.div>
-                  )}
-                </motion.div>
-                
                 {/* Winner Title with animation */}
                 <motion.h2 
                   className="text-4xl font-black mb-4"
@@ -586,8 +524,8 @@ const App: React.FC = () => {
                     backgroundClip: 'text'
                   }}
                 >
-                  {gameState.winner === 'draw' ? '무승부!' : 
-                   gameState.winner === 1 ? '블루 팀 승리!' : '레드 팀 승리!'}
+                  {gameState.winner === 'draw' ? 'It\'s a Tie!' : 
+                   gameState.winner === 1 ? 'Blue Team Wins!' : 'Red Team Wins!'}
                 </motion.h2>
                 
                 {/* Score Display */}
@@ -599,25 +537,31 @@ const App: React.FC = () => {
                 >
                   <div className="bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-2xl p-6 border-2 border-indigo-200">
                     <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
-                      최종 점수
+                      Final Score
                     </p>
                     <div className="flex items-center justify-center gap-8">
                       {/* Player 1 Score */}
-                      <div className={`text-center transition-all ${
-                        gameState.winner === 1 ? 'scale-110' : ''
-                      }`}>
+                      <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
-                          <div className="w-8 h-8">
-                            <Character player={1} />
+                          <div 
+                            className="flex-shrink-0 overflow-visible flex items-center justify-center transition-all duration-300"
+                            style={{
+                              width: gameState.winner === 1 ? '64px' : '52px',
+                              height: gameState.winner === 1 ? '64px' : '52px'
+                            }}
+                          >
+                            <div className="w-full h-full">
+                              <Character player={1} />
+                            </div>
                           </div>
-                          <span className="text-xs font-bold text-slate-500">블루</span>
+                          <span className="text-xs font-bold text-slate-500">Blue</span>
                         </div>
                         <motion.div
                           className={`text-4xl font-black ${
-                            gameState.winner === 1 ? 'text-cyan-600' : 'text-slate-700'
-                          }`}
+                            gameState.winner === 1 ? 'text-cyan-600 scale-110' : 'text-slate-700'
+                          } transition-transform`}
                           initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
+                          animate={{ scale: gameState.winner === 1 ? 1.1 : 1 }}
                           transition={{ delay: 0.9, type: "spring" }}
                         >
                           {gameState.score[1]}
@@ -628,23 +572,29 @@ const App: React.FC = () => {
                       <div className="text-2xl font-black text-slate-300">VS</div>
 
                       {/* Player 2 Score */}
-                      <div className={`text-center transition-all ${
-                        gameState.winner === 2 ? 'scale-110' : ''
-                      }`}>
+                      <div className="text-center">
                         <div className="flex items-center justify-center gap-2 mb-2">
-                          <div className="w-8 h-8">
-                            <Character player={2} />
+                          <div 
+                            className="flex-shrink-0 overflow-visible flex items-center justify-center transition-all duration-300"
+                            style={{
+                              width: gameState.winner === 2 ? '64px' : '52px',
+                              height: gameState.winner === 2 ? '64px' : '52px'
+                            }}
+                          >
+                            <div className="w-full h-full">
+                              <Character player={2} />
+                            </div>
                           </div>
                           <span className="text-xs font-bold text-slate-500">
-                            {config.mode === 'AI' ? 'AI' : '레드'}
+                            {config.mode === 'AI' ? 'AI' : 'Red'}
                           </span>
                         </div>
                         <motion.div
                           className={`text-4xl font-black ${
-                            gameState.winner === 2 ? 'text-rose-600' : 'text-slate-700'
-                          }`}
+                            gameState.winner === 2 ? 'text-rose-600 scale-110' : 'text-slate-700'
+                          } transition-transform`}
                           initial={{ scale: 0 }}
-                          animate={{ scale: 1 }}
+                          animate={{ scale: gameState.winner === 2 ? 1.1 : 1 }}
                           transition={{ delay: 0.9, type: "spring" }}
                         >
                           {gameState.score[2]}
@@ -664,9 +614,9 @@ const App: React.FC = () => {
                           <span className={`${
                             gameState.winner === 1 ? 'text-cyan-600' : 'text-rose-600'
                           }`}>
-                            {gameState.winner === 1 ? '블루' : config.mode === 'AI' ? 'AI' : '레드'} 팀
+                            {gameState.winner === 1 ? 'Blue' : config.mode === 'AI' ? 'AI' : 'Red'} Team
                           </span>
-                          이 {gameState.score[gameState.winner as Player]}개 칸을 점령했습니다!
+                          {' '}captured {gameState.score[gameState.winner as Player]} cells!
                         </p>
                       </motion.div>
                     )}
@@ -684,13 +634,13 @@ const App: React.FC = () => {
                     onClick={() => startGame(config.mode, config.difficulty)}
                     className="w-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 hover:scale-105 active:scale-100 transition-all text-lg"
                   >
-                    다시 하기
+                    Play Again
                   </button>
                   <button 
                     onClick={returnToMenu}
                     className="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
                   >
-                    메뉴로 돌아가기
+                    Back to Menu
                   </button>
                 </motion.div>
               </div>
