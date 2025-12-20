@@ -5,8 +5,9 @@ import { soundService } from './services/sound';
 import Board from './components/Board';
 import Character from './components/Character';
 import SplashScreen from './components/SplashScreen';
+import Tutorial from './components/Tutorial';
 import { motion, AnimatePresence } from 'framer-motion';
-import { RefreshCw, Users, Cpu, ArrowRight, Volume2, VolumeX } from 'lucide-react';
+import { RefreshCw, Users, Cpu, ArrowRight, Volume2, VolumeX, HelpCircle } from 'lucide-react';
 
 const App: React.FC = () => {
   // --- State ---
@@ -15,6 +16,7 @@ const App: React.FC = () => {
   const [showDifficultySelect, setShowDifficultySelect] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState(5);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const [gameState, setGameState] = useState<GameState>({
     board: [],
@@ -225,6 +227,18 @@ const App: React.FC = () => {
             {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
 
+          {/* Tutorial Button (Menu) */}
+          <button 
+            onClick={() => {
+              soundService.playClick();
+              setShowTutorial(true);
+            }}
+            className="absolute top-4 left-4 z-20 bg-indigo-100 hover:bg-indigo-200 p-2 rounded-full text-indigo-600 transition-colors"
+            title="튜토리얼 보기"
+          >
+            <HelpCircle size={20} />
+          </button>
+
           {/* Clean Header Section */}
           <div className="pt-16 pb-8 px-4 text-center">
             <h1 className="text-4xl font-black text-slate-800 tracking-wider leading-none mb-2">
@@ -356,6 +370,18 @@ const App: React.FC = () => {
             {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
 
+          {/* Tutorial Button (In-Game) */}
+          <button 
+             onClick={() => {
+               soundService.playClick();
+               setShowTutorial(true);
+             }}
+             className="absolute -top-10 right-12 sm:top-1/2 sm:-right-24 sm:-translate-y-1/2 bg-indigo-100 p-2 rounded-full text-indigo-600 hover:bg-indigo-200 shadow-sm transition-all"
+             title="튜토리얼 보기"
+          >
+            <HelpCircle size={20} />
+          </button>
+
           {/* Player 1 Score */}
           <div className={`flex items-center gap-3 transition-opacity ${gameState.currentPlayer === 1 ? 'opacity-100' : 'opacity-60'}`}>
             <div className="relative w-12 h-12 sm:w-16 sm:h-16">
@@ -449,51 +475,224 @@ const App: React.FC = () => {
         </button>
       </div>
 
+      {/* Tutorial Modal */}
+      {showTutorial && (
+        <Tutorial onClose={() => {
+          soundService.playClick();
+          setShowTutorial(false);
+        }} />
+      )}
+
       {/* Game Over Modal */}
       <AnimatePresence>
         {gameState.isGameOver && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
             <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full text-center border-4 border-indigo-200"
+              initial={{ scale: 0.5, opacity: 0, rotateY: -90 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              transition={{ type: "spring", stiffness: 200, damping: 20 }}
+              className="bg-gradient-to-br from-white to-slate-50 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-indigo-300 relative overflow-hidden"
             >
-              <div className="mb-6 flex justify-center">
-                 {gameState.winner === 'draw' ? (
-                   <div className="w-24 h-24 bg-slate-200 rounded-full flex items-center justify-center">
-                      <Users className="w-12 h-12 text-slate-500" />
-                   </div>
-                 ) : (
-                   <div className="scale-150">
-                     <Character player={gameState.winner as Player} />
-                   </div>
-                 )}
-              </div>
+              {/* Animated background effects */}
+              <motion.div
+                className="absolute inset-0 opacity-10"
+                animate={{
+                  background: gameState.winner === 1 
+                    ? 'radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.3) 0%, transparent 70%)'
+                    : gameState.winner === 2
+                    ? 'radial-gradient(circle at 50% 50%, rgba(244, 63, 94, 0.3) 0%, transparent 70%)'
+                    : 'radial-gradient(circle at 50% 50%, rgba(148, 163, 184, 0.3) 0%, transparent 70%)'
+                }}
+              />
               
-              <h2 className="text-3xl font-black text-slate-800 mb-2">
-                {gameState.winner === 'draw' ? 'It\'s a Tie!' : 
-                 gameState.winner === 1 ? 'Blue Wins!' : 'Red Wins!'}
-              </h2>
-              
-              <p className="text-slate-500 mb-8 font-medium">
-                {gameState.winner === 'draw' 
-                  ? "Wow, what a close battle!" 
-                  : `Great job! They took over ${gameState.score[gameState.winner as Player]} spots!`}
-              </p>
+              {/* Confetti effect */}
+              {gameState.winner !== 'draw' && (
+                <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                  {[...Array(20)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className={`absolute w-2 h-2 rounded-full ${
+                        gameState.winner === 1 ? 'bg-cyan-400' : 'bg-rose-400'
+                      }`}
+                      initial={{
+                        x: '50%',
+                        y: '50%',
+                        opacity: 1,
+                        scale: 1
+                      }}
+                      animate={{
+                        x: `${Math.random() * 100}%`,
+                        y: `${Math.random() * 100 + 50}%`,
+                        opacity: 0,
+                        scale: 0
+                      }}
+                      transition={{
+                        duration: 2,
+                        delay: Math.random() * 0.5,
+                        ease: "easeOut"
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
 
-              <div className="space-y-3">
-                <button 
-                  onClick={() => startGame(config.mode, config.difficulty)}
-                  className="w-full bg-indigo-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-600 active:translate-y-1 transition-all"
+              <div className="relative z-10">
+                {/* Winner Character with animation */}
+                <motion.div 
+                  className="mb-6 flex justify-center"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ delay: 0.3, type: "spring", stiffness: 200 }}
                 >
-                  Play Again
-                </button>
-                <button 
-                  onClick={returnToMenu}
-                  className="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
+                  {gameState.winner === 'draw' ? (
+                    <motion.div 
+                      className="w-32 h-32 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center shadow-lg"
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ repeat: Infinity, duration: 3 }}
+                    >
+                      <Users className="w-16 h-16 text-slate-500" />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      animate={{ 
+                        scale: [1, 1.2, 1],
+                        rotate: [0, 5, -5, 0]
+                      }}
+                      transition={{ 
+                        scale: { repeat: Infinity, duration: 2 },
+                        rotate: { repeat: Infinity, duration: 3 }
+                      }}
+                      className="scale-150"
+                    >
+                      <Character player={gameState.winner as Player} />
+                    </motion.div>
+                  )}
+                </motion.div>
+                
+                {/* Winner Title with animation */}
+                <motion.h2 
+                  className="text-4xl font-black mb-4"
+                  initial={{ y: -20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  style={{
+                    background: gameState.winner === 1
+                      ? 'linear-gradient(to right, #06b6d4, #0891b2)'
+                      : gameState.winner === 2
+                      ? 'linear-gradient(to right, #f43f5e, #e11d48)'
+                      : 'linear-gradient(to right, #64748b, #475569)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}
                 >
-                  Back to Menu
-                </button>
+                  {gameState.winner === 'draw' ? '무승부!' : 
+                   gameState.winner === 1 ? '블루 팀 승리!' : '레드 팀 승리!'}
+                </motion.h2>
+                
+                {/* Score Display */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                  className="mb-8"
+                >
+                  <div className="bg-gradient-to-r from-indigo-50 to-cyan-50 rounded-2xl p-6 border-2 border-indigo-200">
+                    <p className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
+                      최종 점수
+                    </p>
+                    <div className="flex items-center justify-center gap-8">
+                      {/* Player 1 Score */}
+                      <div className={`text-center transition-all ${
+                        gameState.winner === 1 ? 'scale-110' : ''
+                      }`}>
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="w-8 h-8">
+                            <Character player={1} />
+                          </div>
+                          <span className="text-xs font-bold text-slate-500">블루</span>
+                        </div>
+                        <motion.div
+                          className={`text-4xl font-black ${
+                            gameState.winner === 1 ? 'text-cyan-600' : 'text-slate-700'
+                          }`}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.9, type: "spring" }}
+                        >
+                          {gameState.score[1]}
+                        </motion.div>
+                      </div>
+
+                      {/* VS */}
+                      <div className="text-2xl font-black text-slate-300">VS</div>
+
+                      {/* Player 2 Score */}
+                      <div className={`text-center transition-all ${
+                        gameState.winner === 2 ? 'scale-110' : ''
+                      }`}>
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                          <div className="w-8 h-8">
+                            <Character player={2} />
+                          </div>
+                          <span className="text-xs font-bold text-slate-500">
+                            {config.mode === 'AI' ? 'AI' : '레드'}
+                          </span>
+                        </div>
+                        <motion.div
+                          className={`text-4xl font-black ${
+                            gameState.winner === 2 ? 'text-rose-600' : 'text-slate-700'
+                          }`}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 0.9, type: "spring" }}
+                        >
+                          {gameState.score[2]}
+                        </motion.div>
+                      </div>
+                    </div>
+                    
+                    {/* Winner highlight */}
+                    {gameState.winner !== 'draw' && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1.1 }}
+                        className="mt-4 pt-4 border-t-2 border-slate-200"
+                      >
+                        <p className="text-sm font-bold text-slate-600">
+                          <span className={`${
+                            gameState.winner === 1 ? 'text-cyan-600' : 'text-rose-600'
+                          }`}>
+                            {gameState.winner === 1 ? '블루' : config.mode === 'AI' ? 'AI' : '레드'} 팀
+                          </span>
+                          이 {gameState.score[gameState.winner as Player]}개 칸을 점령했습니다!
+                        </p>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+
+                {/* Action Buttons */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.2 }}
+                  className="space-y-3"
+                >
+                  <button 
+                    onClick={() => startGame(config.mode, config.difficulty)}
+                    className="w-full bg-gradient-to-r from-indigo-500 to-cyan-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:shadow-indigo-300 hover:scale-105 active:scale-100 transition-all text-lg"
+                  >
+                    다시 하기
+                  </button>
+                  <button 
+                    onClick={returnToMenu}
+                    className="w-full bg-slate-100 text-slate-600 font-bold py-3 rounded-xl hover:bg-slate-200 transition-colors"
+                  >
+                    메뉴로 돌아가기
+                  </button>
+                </motion.div>
               </div>
             </motion.div>
           </div>

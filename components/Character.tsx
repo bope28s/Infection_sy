@@ -87,16 +87,7 @@ const Character: React.FC<CharacterProps> = ({ player, isNew, isSelected }) => {
 
         </div>
 
-        {/* Selection Text/Icon */}
-        {isSelected && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10, scale: 0.5 }}
-            animate={{ opacity: 1, y: -25, scale: 1 }}
-            className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg border border-slate-100 whitespace-nowrap z-50"
-          >
-            PICK ME!
-          </motion.div>
-        )}
+        {/* Selection indicator - removed popup to avoid blocking target cells */}
       </div>
     </motion.div>
   );
