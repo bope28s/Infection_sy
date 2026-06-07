@@ -2,11 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 
-// 개발 환경에서만 Tailwind CSS CDN 로드
-// 참고: Tailwind CDN은 개발 환경에서도 경고를 표시하지만, 프로덕션 빌드에서는 로드되지 않습니다
-if (import.meta.env.DEV) {
-  // 스크립트가 이미 로드되었는지 확인
-  if (!document.querySelector('script[src="https://cdn.tailwindcss.com"]')) {
+// Tailwind CSS CDN (프로젝트에 빌드된 CSS가 없어 프로덕션에서도 필요)
+if (!document.querySelector('script[src="https://cdn.tailwindcss.com"]')) {
     const tailwindScript = document.createElement('script');
     tailwindScript.src = 'https://cdn.tailwindcss.com';
     // 경고를 억제하기 위해 설정 추가 (Tailwind CDN이 지원하는 경우)
@@ -25,7 +22,6 @@ if (import.meta.env.DEV) {
       }
     };
     document.head.appendChild(tailwindScript);
-  }
 }
 
 const rootElement = document.getElementById('root');

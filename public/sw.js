@@ -44,7 +44,11 @@ const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon.svg'
+  '/icon.svg',
+  '/pwa-192.png',
+  '/pwa-512.png',
+  '/store_icon.png',
+  '/screenshot/GermBattle.png'
 ];
 
 self.addEventListener('install', (event) => {
