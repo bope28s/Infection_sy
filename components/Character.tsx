@@ -10,12 +10,8 @@ interface CharacterProps {
 const Character: React.FC<CharacterProps> = ({ player, isNew, isSelected }) => {
   const isP1 = player === 1;
 
-  // Generate random animation parameters once per mount
-  const animationParams = useMemo(() => ({
-    yDuration: 2 + Math.random(),
-    yDelay: Math.random() * 2,
-    blinkDelay: Math.random() * 5
-  }), []);
+  // 애니메이션 delay를 컴포넌트 마운트 시 한 번만 생성 (리렌더링 시 유지)
+  const animationDelay = useMemo(() => Math.random() * 2, []);
 
   // 3D Gradients and Colors
   // P1 (Blue): Cyan/Teal mix
@@ -32,28 +28,36 @@ const Character: React.FC<CharacterProps> = ({ player, isNew, isSelected }) => {
       initial={isNew ? { scale: 0 } : { scale: 1 }}
       animate={{ 
         scale: isSelected ? 1.15 : 1,
-        y: isSelected ? -8 : [0, -4, 0],
+        y: isSelected ? -8 : 0,
         rotate: isSelected ? [0, -5, 5, 0] : 0
       }}
       transition={{ 
         scale: { type: "spring", stiffness: 300, damping: 15 },
-        rotate: { repeat: isSelected ? Infinity : 0, duration: 0.4, ease: "easeInOut" },
-        y: { 
-          repeat: isSelected ? 0 : Infinity, 
-          duration: animationParams.yDuration, 
-          ease: "easeInOut",
-          delay: animationParams.yDelay
-        },
+        rotate: isSelected ? { repeat: Infinity, duration: 0.4, ease: "easeInOut" } : { duration: 0 },
+        y: { duration: 0.2 },
         default: { duration: 0.3 }
       }}
+      style={{ 
+        willChange: isSelected ? 'transform' : 'auto',
+        // CSS 애니메이션으로 부유 효과 (선택되지 않은 경우만)
+        ...(!isSelected && !isNew ? {
+          animation: 'float 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          animationDelay: `${animationDelay}s`
+        } : {})
+      }}
     >
-      {/* Shadow Blob (Grounding) */}
-      <motion.div 
-        className={`absolute bottom-0 w-2/3 h-1.5 rounded-full ${shadowColor} blur-[2px]`}
-        animate={{ scaleX: [0.8, 1, 0.8], opacity: [0.5, 0.8, 0.5] }}
-        transition={{ repeat: Infinity, duration: animationParams.yDuration, delay: animationParams.yDelay }}
-        style={{ transform: 'translateY(150%)' }}
-      />
+      {/* Shadow Blob (Grounding) - CSS 애니메이션으로 최적화 */}
+      {!isSelected && (
+        <div 
+          className={`absolute bottom-0 w-2/3 h-1.5 rounded-full ${shadowColor} blur-[2px]`}
+          style={{ 
+            transform: 'translateY(150%)',
+            animation: 'shadow-pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            animationDelay: `${animationDelay}s`,
+            willChange: 'transform, opacity'
+          }}
+        />
+      )}
 
       {/* Main Body Container - Simplified without appendages */}
       <div className="relative w-[75%] h-[75%]">
@@ -69,8 +73,8 @@ const Character: React.FC<CharacterProps> = ({ player, isNew, isSelected }) => {
            <div className="absolute inset-0 flex flex-col items-center justify-center pt-1 pointer-events-none">
              {/* Eyes */}
              <div className="flex gap-1.5 z-20">
-               <Eye delay={animationParams.blinkDelay} />
-               <Eye delay={animationParams.blinkDelay + 0.1} />
+               <Eye />
+               <Eye />
              </div>
              
              {/* Mouth */}
@@ -89,32 +93,43 @@ const Character: React.FC<CharacterProps> = ({ player, isNew, isSelected }) => {
 
         {/* Selection indicator - removed popup to avoid blocking target cells */}
       </div>
+      
+      {/* CSS 애니메이션 정의 - 부드러운 easing 함수 사용 */}
+      <style>{`
+        @keyframes float {
+          0%, 100% { 
+            transform: translateY(0px);
+          }
+          50% { 
+            transform: translateY(-4px);
+          }
+        }
+        @keyframes shadow-pulse {
+          0%, 100% { 
+            transform: translateY(150%) scaleX(0.8);
+            opacity: 0.5;
+          }
+          50% { 
+            transform: translateY(150%) scaleX(1);
+            opacity: 0.8;
+          }
+        }
+      `}</style>
     </motion.div>
   );
 };
 
-// Sub-component for blinking eyes
-const Eye = ({ delay }: { delay: number }) => (
-  <div className="w-3.5 h-4 bg-white rounded-full relative shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] border border-slate-100 flex items-center justify-center overflow-hidden">
-    {/* Pupil */}
-    <div className="w-2 h-2 bg-slate-900 rounded-full relative">
-      {/* Reflection in eye */}
-      <div className="absolute top-0.5 right-0.5 w-0.5 h-0.5 bg-white rounded-full"></div>
+// Sub-component for eyes - 눈깜빡임 제거
+const Eye = () => {
+  return (
+    <div className="w-3.5 h-4 bg-white rounded-full relative shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] border border-slate-100 flex items-center justify-center overflow-hidden">
+      {/* Pupil */}
+      <div className="w-2 h-2 bg-slate-900 rounded-full relative">
+        {/* Reflection in eye */}
+        <div className="absolute top-0.5 right-0.5 w-0.5 h-0.5 bg-white rounded-full"></div>
+      </div>
     </div>
-    
-    {/* Eyelid for blinking */}
-    <motion.div 
-       className="absolute inset-0 bg-slate-800 z-10 origin-top"
-       initial={{ scaleY: 0 }}
-       animate={{ scaleY: [0, 1, 0] }}
-       transition={{ 
-         repeat: Infinity, 
-         repeatDelay: 3 + Math.random() * 3, 
-         duration: 0.2, 
-         delay: delay 
-       }}
-    />
-  </div>
-);
+  );
+};
 
 export default Character;

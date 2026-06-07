@@ -22,3 +22,22 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Android / TWA build artifacts
+.gradle/
+build/
+*.keystore
+*.apk
+*.aab
+*.idsig
+app/build/
+android.keystore
+
+# Capacitor native (optional local builds)
+android/
+ios/

@@ -27,6 +27,6 @@ export interface GameState {
 }
 
 export interface GameConfig {
-  mode: 'AI' | 'PVP';
+  mode: 'AI' | 'PVP' | 'ONLINE';
   difficulty: number; // 1 to 10
 }
