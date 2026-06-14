@@ -33,6 +33,8 @@ export interface RankingEntry {
 
 import { CellState } from '../types';
 
+let realtimeChannelCounter = 0;
+
 export interface OnlineGame {
   id: string;
   room_id: string;
@@ -890,7 +892,7 @@ export function subscribeToOnlineGame(
   roomId: string,
   callback: (game: OnlineGame) => void
 ) {
-  const channelName = `online_game_${roomId}`;
+  const channelName = `online_game_${roomId}_${++realtimeChannelCounter}`;
   console.log('subscribeToOnlineGame called:', { roomId, channelName });
   
   let pollTimer: NodeJS.Timeout | null = null;
@@ -1120,8 +1122,49 @@ export function subscribeToMatchRoom(
   roomId: string,
   callback: (room: MatchRoom | null) => void // null을 반환할 수 있도록 타입 변경 (방이 삭제된 경우)
 ) {
-  const channelName = `match_room_${roomId}`;
+  const channelName = `match_room_${roomId}_${++realtimeChannelCounter}`;
   console.log('subscribeToMatchRoom called:', { roomId, channelName });
+
+  let pollTimer: ReturnType<typeof setInterval> | null = null;
+  let lastRoomSnapshot: string | null = null;
+
+  const stopPolling = () => {
+    if (pollTimer) {
+      clearInterval(pollTimer);
+      pollTimer = null;
+    }
+  };
+
+  const syncRoomState = async () => {
+    const { data, error } = await supabase
+      .from('match_rooms')
+      .select('*')
+      .eq('id', roomId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching current match room state:', error);
+      return false;
+    }
+
+    if (!data) {
+      callback(null);
+      return true;
+    }
+
+    const snapshot = JSON.stringify(data);
+    if (snapshot !== lastRoomSnapshot) {
+      lastRoomSnapshot = snapshot;
+      callback(data as MatchRoom);
+    }
+
+    return true;
+  };
+
+  const startPolling = () => {
+    stopPolling();
+    pollTimer = setInterval(syncRoomState, 1000);
+  };
   
   const channel = supabase
     .channel(channelName, {
@@ -1148,6 +1191,7 @@ export function subscribeToMatchRoom(
         });
         if (payload.new) {
           const room = payload.new as MatchRoom;
+          lastRoomSnapshot = JSON.stringify(room);
           console.log('MatchRoom callback called:', room);
           callback(room);
         } else {
@@ -1164,6 +1208,7 @@ export function subscribeToMatchRoom(
         filter: `id=eq.${roomId}`
       },
       (payload) => {
+        stopPolling();
         console.log('MatchRoom DELETE event received:', {
           eventType: payload.eventType,
           old: payload.old,
@@ -1182,11 +1227,19 @@ export function subscribeToMatchRoom(
       // SUBSCRIBED 상태가 되면 구독이 준비되었음을 확인
       if (status === 'SUBSCRIBED') {
         console.log('MatchRoom subscription fully ready, listening for events:', channelName);
+        await syncRoomState();
+        startPolling();
+      } else if (status === 'TIMED_OUT') {
+        await syncRoomState();
+        startPolling();
+      } else if (status === 'CLOSED') {
+        stopPolling();
       }
     });
 
   return () => {
     console.log('MatchRoom subscription unsubscribed:', channelName);
+    stopPolling();
     supabase.removeChannel(channel);
   };
 }

@@ -30,11 +30,11 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
   const [isReady, setIsReady] = useState(false);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const roomRef = useRef<MatchRoom>(initialRoom);
+  const countdownRef = useRef<number | null>(null);
   const onCancelRef = useRef(onCancel);
   const onOpponentLeftRef = useRef(onOpponentLeft);
 
   // 현재 플레이어가 플레이어1인지 플레이어2인지 확인
-  const isPlayer1 = room.player1_id === currentPlayer.id;
 
   // 준비 버튼 클릭
   const handleReady = async () => {
@@ -42,6 +42,7 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
       const updatedRoom = await setPlayerReady(room.id, currentPlayer.id, true);
       // 즉시 로컬 상태 업데이트
       setRoom(updatedRoom);
+      roomRef.current = updatedRoom;
       setIsReady(true);
     } catch (error: any) {
       console.error('Failed to set ready status:', error);
@@ -55,6 +56,7 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
       const updatedRoom = await setPlayerReady(room.id, currentPlayer.id, false);
       // 즉시 로컬 상태 업데이트
       setRoom(updatedRoom);
+      roomRef.current = updatedRoom;
       setIsReady(false);
       setCountdown(null);
       if (countdownIntervalRef.current) {
@@ -75,6 +77,10 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
   useEffect(() => {
     onOpponentLeftRef.current = onOpponentLeft;
   }, [onOpponentLeft]);
+
+  useEffect(() => {
+    countdownRef.current = countdown;
+  }, [countdown]);
 
   // 초기 room 상태 설정 및 준비 상태 확인
   useEffect(() => {
@@ -165,7 +171,7 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
       roomRef.current = updatedRoom;
 
       const bothReady = updatedRoom.player1_ready === true && updatedRoom.player2_ready === true;
-      const currentReadyStatus = isPlayer1 
+      const currentReadyStatus = updatedRoom.player1_id === currentPlayer.id
         ? updatedRoom.player1_ready === true
         : updatedRoom.player2_ready === true;
 
@@ -173,9 +179,9 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
       setIsReady(currentReadyStatus || false);
 
       // 두 플레이어 모두 준비되었고 카운트다운이 시작되지 않았으면 카운트다운 시작
-      if (bothReady && countdown === null) {
+      if (bothReady && countdownRef.current === null) {
         setCountdown(5);
-      } else if (!bothReady && countdown !== null) {
+      } else if (!bothReady && countdownRef.current !== null) {
         // 한 명이 준비 취소하면 카운트다운 중지
         setCountdown(null);
         if (countdownIntervalRef.current) {
@@ -188,7 +194,7 @@ const GameReadyScreen: React.FC<GameReadyScreenProps> = ({
     return () => {
       unsubscribe();
     };
-  }, [room?.id, isPlayer1, countdown]);
+  }, [room?.id, currentPlayer.id]);
 
   // 카운트다운 처리
   useEffect(() => {
