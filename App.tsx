@@ -15,7 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { RefreshCw, Users, Cpu, ArrowRight, Volume2, VolumeX, HelpCircle, Trophy } from 'lucide-react';
 
 // 개발 모드에서만 로깅 활성화
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = import.meta.env.DEV;
 const debugLog = (...args: any[]) => {
   if (isDev) {
     console.log(...args);

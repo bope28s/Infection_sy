@@ -44,6 +44,15 @@ export interface OnlineGame {
   updated_at: string;
 }
 
+function normalizeOnlineGame(game: any): OnlineGame {
+  return {
+    ...game,
+    board_state: game.board_state as CellState[][],
+    current_player: game.current_player as 1 | 2,
+    winner: game.winner as 1 | 2 | null
+  };
+}
+
 // 닉네임으로 플레이어 가져오기 또는 생성
 export async function getOrCreatePlayer(nickname: string): Promise<PlayerRecord> {
   // 먼저 기존 플레이어 확인
@@ -727,12 +736,7 @@ export async function getOrCreateOnlineGame(roomId: string, initialBoard: CellSt
 
   if (existing) {
     console.log('Existing game found:', existing.id);
-    return {
-      ...existing,
-      board_state: existing.board_state as CellState[][],
-      current_player: existing.current_player as 1 | 2,
-      winner: existing.winner as 1 | 2 | null
-    };
+    return normalizeOnlineGame(existing);
   }
 
   // 새 게임 생성
@@ -770,12 +774,7 @@ export async function getOrCreateOnlineGame(roomId: string, initialBoard: CellSt
       }
       
       console.log('Returning existing game after conflict:', existingGame.id);
-      return {
-        ...existingGame,
-        board_state: existingGame.board_state as CellState[][],
-        current_player: existingGame.current_player as 1 | 2,
-        winner: existingGame.winner as 1 | 2 | null
-      };
+      return normalizeOnlineGame(existingGame);
     }
     
     console.error('Game creation error:', error);
@@ -800,12 +799,7 @@ export async function getOrCreateOnlineGame(roomId: string, initialBoard: CellSt
     boardLength: (newGame.board_state as any)?.length || 0,
     note: 'This should trigger a Realtime INSERT event for all subscribers'
   });
-  return {
-    ...newGame,
-    board_state: newGame.board_state as CellState[][],
-    current_player: newGame.current_player as 1 | 2,
-    winner: newGame.winner as 1 | 2 | null
-  };
+  return normalizeOnlineGame(newGame);
 }
 
 // 온라인 게임 상태 업데이트
@@ -943,12 +937,7 @@ export function subscribeToOnlineGame(
               currentPlayer: game.current_player,
               boardLength: game.board_state?.length || 0
             });
-            callback({
-              ...game,
-              board_state: game.board_state as CellState[][],
-              current_player: game.current_player as 1 | 2,
-              winner: game.winner as 1 | 2 | null
-            });
+            callback(normalizeOnlineGame(game));
           } else {
             console.warn('OnlineGame UPDATE/INSERT event has no new data:', payload);
           }
@@ -1003,12 +992,7 @@ export function subscribeToOnlineGame(
             boardLength: (currentGame.board_state as any)?.length || 0
           });
           // 초기 상태 동기화
-          callback({
-            ...currentGame,
-            board_state: currentGame.board_state as CellState[][],
-            current_player: currentGame.current_player as 1 | 2,
-            winner: currentGame.winner as 1 | 2 | null
-          });
+          callback(normalizeOnlineGame(currentGame));
           return true;
         } else {
           console.log('No current game state found, waiting for game creation', {
@@ -1017,31 +1001,6 @@ export function subscribeToOnlineGame(
           });
           
           // 디버깅: 모든 게임을 조회해서 room_id 확인
-          const { data: allGames, error: allGamesError } = await supabase
-            .from('online_games')
-            .select('id, room_id, current_player, updated_at')
-            .order('updated_at', { ascending: false })
-            .limit(10);
-          
-          if (!allGamesError && allGames) {
-            console.log('Debug: All games in database:', allGames.map(g => ({
-              id: g.id,
-              room_id: g.room_id,
-              current_player: g.current_player,
-              updated_at: g.updated_at
-            })));
-            console.log('Debug: Looking for roomId:', roomId);
-            const matchingGame = allGames.find(g => g.room_id === roomId);
-            if (matchingGame) {
-              console.log('Debug: Found matching game!', matchingGame);
-            } else {
-              console.warn('Debug: No matching game found for roomId:', roomId);
-              console.warn('Debug: Available room_ids:', allGames.map(g => g.room_id));
-            }
-          } else if (allGamesError) {
-            console.error('Debug: Error fetching all games:', allGamesError);
-          }
-          
           return false;
         }
       };
@@ -1057,8 +1016,8 @@ export function subscribeToOnlineGame(
         if (!gameExists) {
           console.log('Starting polling for game creation...');
           let pollCount = 0;
-          const maxPolls = 60; // 최대 60번 (약 30초) - 플레이어1이 게임을 생성할 시간을 더 줌
-          const pollInterval = 500; // 500ms마다 확인
+          const maxPolls = 30; // 약 30초
+          const pollInterval = 1000; // 1초마다 확인
           
           pollTimer = setInterval(async () => {
             pollCount++;
@@ -1098,8 +1057,8 @@ export function subscribeToOnlineGame(
         // 게임이 존재하든 존재하지 않든 주기적으로 상태를 동기화
         console.log('Starting periodic polling for game state updates (after timeout)...');
         let pollCount = 0;
-        const maxPolls = 120; // 최대 120번 (약 60초) - 더 긴 시간 동안 폴링
-        const pollInterval = 500; // 500ms마다 확인
+        const maxPolls = 60; // 약 60초
+        const pollInterval = 1000; // 1초마다 확인
         
         pollTimer = setInterval(async () => {
           pollCount++;
