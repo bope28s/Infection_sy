@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { GameState, GameConfig, Position, Player, Move, CellState } from './types';
 import { initializeBoard, getValidMoves, executeMove, countScore, checkGameOver, getBestMove } from './services/gameLogic';
 import { soundService } from './services/sound';
-import { getOrCreatePlayer, savePVPMatch, saveAIMatch, PlayerRecord, MatchRoom, getOrCreateOnlineGame, updateOnlineGame, subscribeToOnlineGame, getPlayerNickname, subscribeToMatchRoom, leaveMatchRoom, getPlayerRank, logoutPlayer, getPlayerLevel, setPlayerReady } from './services/backend';
+import { getOrCreatePlayer, savePVPMatch, saveAIMatch, PlayerRecord, MatchRoom, getOrCreateOnlineGame, updateOnlineGame, subscribeToOnlineGame, getPlayerNickname, subscribeToMatchRoom, leaveMatchRoom, getPlayerRank, getPlayerLevel, setPlayerReady } from './services/backend';
 import { supabase } from './lib/supabase';
 import Board from './components/Board';
 import Character from './components/Character';
@@ -22,6 +22,27 @@ const debugLog = (...args: any[]) => {
   }
 };
 
+const PLAYER_STORAGE_KEY = 'super-germ-battle-player';
+
+const readStoredPlayer = (): PlayerRecord | null => {
+  try {
+    const rawPlayer = localStorage.getItem(PLAYER_STORAGE_KEY);
+    return rawPlayer ? JSON.parse(rawPlayer) as PlayerRecord : null;
+  } catch (error) {
+    console.warn('Failed to restore saved player:', error);
+    localStorage.removeItem(PLAYER_STORAGE_KEY);
+    return null;
+  }
+};
+
+const saveStoredPlayer = (player: PlayerRecord) => {
+  try {
+    localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(player));
+  } catch (error) {
+    console.warn('Failed to save player:', error);
+  }
+};
+
 // 빠른 보드 비교 함수 (JSON.stringify 대신 사용)
 const boardsEqual = (board1: CellState[][], board2: CellState[][]): boolean => {
   if (!board1 || !board2) return board1 === board2;
@@ -37,9 +58,10 @@ const boardsEqual = (board1: CellState[][], board2: CellState[][]): boolean => {
 
 const App: React.FC = () => {
   // --- State ---
+  const restoredPlayer = React.useMemo(() => readStoredPlayer(), []);
   const [loading, setLoading] = useState(true); // Splash screen state
-  const [currentPlayer, setCurrentPlayer] = useState<PlayerRecord | null>(null); // 현재 플레이어
-  const [showNicknameInput, setShowNicknameInput] = useState(true); // 닉네임 입력 모달
+  const [currentPlayer, setCurrentPlayer] = useState<PlayerRecord | null>(restoredPlayer); // 현재 플레이어
+  const [showNicknameInput, setShowNicknameInput] = useState(!restoredPlayer); // 닉네임 입력 모달
   const [config, setConfig] = useState<GameConfig | null>(null); // Null means Main Menu
   const [showDifficultySelect, setShowDifficultySelect] = useState(false);
   const [selectedDifficulty, setSelectedDifficulty] = useState(5);
@@ -164,6 +186,7 @@ const App: React.FC = () => {
     try {
       const player = await getOrCreatePlayer(nickname.trim());
       setCurrentPlayer(player);
+      saveStoredPlayer(player);
       setShowNicknameInput(false);
       soundService.playClick();
     } catch (error: any) {
@@ -1477,17 +1500,6 @@ const App: React.FC = () => {
       };
     }
   }, [config?.mode, currentMatchRoom?.id, currentMatchRoom?.player1_id, currentMatchRoom?.player2_id, currentPlayer?.id, handleGameEnd]);
-
-  // 플레이어 로그아웃 처리 (컴포넌트 언마운트 시)
-  useEffect(() => {
-    // 컴포넌트 언마운트 시 로그아웃 처리
-    return () => {
-      if (currentPlayer?.id) {
-        // cleanup 함수에서는 비동기 함수 사용 가능
-        logoutPlayer(currentPlayer.id).catch(console.error);
-      }
-    };
-  }, [currentPlayer?.id]);
 
   // --- AI Logic ---
   useEffect(() => {
