@@ -43,6 +43,10 @@ const saveStoredPlayer = (player: PlayerRecord) => {
   }
 };
 
+const clearStoredPlayer = () => {
+  localStorage.removeItem(PLAYER_STORAGE_KEY);
+};
+
 // 빠른 보드 비교 함수 (JSON.stringify 대신 사용)
 const boardsEqual = (board1: CellState[][], board2: CellState[][]): boolean => {
   if (!board1 || !board2) return board1 === board2;
@@ -205,6 +209,28 @@ const App: React.FC = () => {
     setSoundEnabled(newState);
     soundService.toggle(newState);
     if (newState) soundService.playClick();
+  };
+
+  const changeNickname = async () => {
+    soundService.playClick();
+    if (currentMatchRoom && currentPlayer) {
+      try {
+        await leaveMatchRoom(currentMatchRoom.id, currentPlayer.id);
+      } catch (error) {
+        console.error('Failed to leave room before changing nickname:', error);
+      }
+    }
+
+    clearStoredPlayer();
+    setCurrentPlayer(null);
+    setCurrentMatchRoom(null);
+    currentMatchRoomRef.current = null;
+    setConfig(null);
+    setShowMatchRoom(false);
+    setShowReadyScreen(false);
+    setShowRanking(false);
+    setShowDifficultySelect(false);
+    setShowNicknameInput(true);
   };
 
   // --- Initialization ---
@@ -1679,6 +1705,18 @@ const App: React.FC = () => {
             <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">
               Strategy Board Game
             </p>
+            {currentPlayer && (
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-2 text-xs font-bold text-slate-500">
+                <span className="max-w-[140px] truncate text-slate-700">{currentPlayer.nickname}</span>
+                <button
+                  type="button"
+                  onClick={changeNickname}
+                  className="text-indigo-600 hover:text-indigo-700"
+                >
+                  Change
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="p-8 pt-0 bg-white">
